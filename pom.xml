@@ -21,6 +21,12 @@
         <aws.java.sdk.version>2.20.0</aws.java.sdk.version>
         <gcp.libraries.bom.version>26.34.0</gcp.libraries.bom.version>
     </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-commons</artifactId>
+        </dependency>
+    </dependencies>
 
     <modules>
         <module>service-registry</module>

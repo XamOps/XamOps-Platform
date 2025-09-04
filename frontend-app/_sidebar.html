@@ -252,7 +252,7 @@ fetch('/api/xamops/account-manager/accounts')
         isSelectionDisabled(accountProvider) {
             if (this.selectedAccountIds.length === 0) return false;
             const isGcpSelected = this.selectedAccountIds.some(id => this.accounts.find(a => a.id === id)?.provider === 'GCP');
-            
+
             if (isGcpSelected) {
                 return true; // Disable all if a GCP account is selected
             } else { // Multiple AWS accounts are selected
@@ -262,7 +262,7 @@ fetch('/api/xamops/account-manager/accounts')
         get filteredAccounts() {
             if (this.searchTerm === '') return this.accounts;
             const term = this.searchTerm.toLowerCase();
-            return this.accounts.filter(account => 
+            return this.accounts.filter(account =>
                 account.name.toLowerCase().includes(term) || (account.id && account.id.toLowerCase().includes(term))
             );
         },
@@ -271,14 +271,14 @@ fetch('/api/xamops/account-manager/accounts')
              return '/icons/default-icon.png';
         }
     }" class="p-4 border-b bg-gradient-to-r from-gray-50 to-white flex-shrink-0">
-        
+
         <div class="relative">
             <div @click="open = !open" class="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-200 hover:border-indigo-300 cursor-pointer transition-all duration-200 hover:shadow-md">
                 <div class="flex items-center min-w-0">
                     <div class="relative flex-shrink-0">
-                         <div class="w-10 h-10 account-avatar rounded-full flex items-center justify-center text-white font-bold text-sm mr-3" x-show="selectedAccountIds.length === 0" x-text="'X'"></div>
-                         <div class="w-10 h-10 account-avatar rounded-full flex items-center justify-center text-white font-bold text-lg mr-3" x-show="selectedAccountIds.length > 1" x-text="selectedAccountIds.length"></div>
-                         <img :src="getProviderIcon(selectedAccountDisplay.provider)" class="w-10 h-10 rounded-full mr-3 object-cover" x-show="selectedAccountIds.length === 1">
+                        <div class="w-10 h-10 account-avatar rounded-full flex items-center justify-center text-white font-bold text-sm mr-3" x-show="selectedAccountIds.length === 0" x-text="'X'"></div>
+                        <div class="w-10 h-10 account-avatar rounded-full flex items-center justify-center text-white font-bold text-lg mr-3" x-show="selectedAccountIds.length > 1" x-text="selectedAccountIds.length"></div>
+                        <img :src="getProviderIcon(selectedAccountDisplay.provider)" class="w-10 h-10 rounded-full mr-3 object-cover" x-show="selectedAccountIds.length === 1">
                         <div class="connection-indicator" x-show="selectedAccountIds.length > 0"></div>
                     </div>
                     <div class="flex-1 min-w-0">
@@ -294,7 +294,7 @@ fetch('/api/xamops/account-manager/accounts')
                     <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 submenu-indicator" :class="{ 'rotate-180': open }"></i>
                 </div>
             </div>
-            
+
             <div x-show="open" x-transition @click.outside="open = false" x-cloak class="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden dropdown-animation">
                 <div class="p-3 border-b bg-gray-50"><div class="search-container"><i class="fas fa-search search-icon"></i><input type="text" x-model="searchTerm" placeholder="Search accounts..." class="search-input w-full px-3 py-2 text-sm rounded-lg focus:outline-none"></div></div>
                 <div class="py-1 max-h-60 overflow-y-auto sidebar-scroll">
@@ -314,18 +314,18 @@ fetch('/api/xamops/account-manager/accounts')
         </div>
     </div>
 
-   <nav x-data="{
+    <nav x-data="{
             selectedIds: JSON.parse(sessionStorage.getItem('selectedAccountIds') || '[]'),
             isActive(path) {
                 const currentPath = window.location.pathname;
-                // ### CHANGE 2 (Part A): Update active state logic ###
                 if (path === '/dashboard.html') return currentPath === '/' || currentPath === '/dashboard.html' || currentPath.startsWith('/gcp_');
+                // ### ADDED LOGIC FOR BILLOPS ###
+                if (path === '/billops.html') return currentPath.startsWith('/billops.html');
                 return currentPath.startsWith(path);
             },
             getLink(path) {
                 if (this.selectedIds.length === 0) {
-                    // For dashboard, link to it even without selection, it will show the welcome message
-                    if(path === '/dashboard.html') return '/dashboard.html';
+                    if(path === '/dashboard.html' || path === '/account-manager') return path;
                     return '#';
                 }
                 const accountParam = this.selectedIds.join(',');
@@ -343,11 +343,11 @@ fetch('/api/xamops/account-manager/accounts')
                 <span>Dashboard</span>
             </a>
         </div>
-        
-        
+
+
         <div class="sidebar-section" :class="{'active': isActive('/cloudk8s') || isActive('/cloudlist') || isActive('/cloudmap')}">
-             <div x-data="{ open: isActive('/cloudk8s') || isActive('/cloudlist') || isActive('/cloudmap') }">
-                <button @click="open = !open" 
+            <div x-data="{ open: isActive('/cloudk8s') || isActive('/cloudlist') || isActive('/cloudmap') }">
+                <button @click="open = !open"
                         class="nav-item menu-item w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-200"
                         :class="isActive('/cloudk8s') || isActive('/cloudlist') || isActive('/cloudmap') ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'">
                     <div class="flex items-center gap-3">
@@ -363,13 +363,29 @@ fetch('/api/xamops/account-manager/accounts')
                 </div>
             </div>
         </div>
-        
+
+        <div class="sidebar-section" :class="{'active': isActive('/billops.html')}">
+            <div x-data="{ open: isActive('/billops.html') }">
+                <button @click="open = !open"
+                        class="nav-item menu-item w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-200"
+                        :class="isActive('/billops.html') ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file-invoice-dollar menu-icon fa-fw w-5 text-center"></i>
+                        <span>BillOps</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs submenu-indicator transition-transform duration-200" :class="open && 'rotate-180'"></i>
+                </button>
+                <div x-show="open" x-cloak class="ml-6 mt-2 space-y-1" x-transition>
+                    <a :href="getLink('/billops.html')" :class="{'text-blue-600 font-bold bg-blue-50 border-l-4 border-blue-500': isActive('/billops.html')}" class="nav-item block rounded-lg px-4 py-2 font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50">Billing Dashboard</a>
+                </div>
+            </div>
+        </div>
         <div class="sidebar-section" :class="{'active': isActive('/finops') || isActive('/cost') || isActive('/waste') || isActive('/rightsizing') || isActive('/reservation')}">
-             <div x-data="{ open: isActive('/finops') || isActive('/cost') || isActive('/waste') || isActive('/rightsizing') || isActive('/reservation') }">
+            <div x-data="{ open: isActive('/finops') || isActive('/cost') || isActive('/waste') || isActive('/rightsizing') || isActive('/reservation') }">
                 <button @click="open = !open"
                         class="nav-item menu-item w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-200"
                         :class="isActive('/finops') || isActive('/cost') || isActive('/waste') || isActive('/rightsizing') || isActive('/reservation') ? 'bg-gradient-to-r from-green-500 to-teal-600 text-white shadow-lg' : 'text-gray-600 hover:bg-green-50 hover:text-green-600'">
-                     <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3">
                         <i class="fas fa-cogs menu-icon fa-fw w-5 text-center"></i>
                         <span>Optimization</span>
                     </div>
