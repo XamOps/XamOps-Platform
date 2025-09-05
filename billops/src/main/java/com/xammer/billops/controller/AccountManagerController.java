@@ -9,20 +9,23 @@ import com.xammer.billops.repository.CloudAccountRepository;
 import com.xammer.billops.service.AwsAccountService;
 import com.xammer.billops.service.CustomerService;
 import com.xammer.billops.service.GcpDataService;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.security.Principal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Controller
-@RequestMapping("/account")
+// 1. Changed to @RestController
+@RestController
+// 2. Updated the base path for a consistent API structure
+@RequestMapping("/api/accounts")
 @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
 public class AccountManagerController {
 
@@ -38,43 +41,39 @@ public class AccountManagerController {
         this.customerService = customerService;
         this.cloudAccountRepository = cloudAccountRepository;
     }
-    @GetMapping("/manager")
-    public String showAccountManager(Model model, Principal principal) {
-        // --- UPDATED TO USE THE NEW METHOD ---
-        Customer customer = customerService.findByUsernameWithCloudAccounts(principal.getName());
-        List<CloudAccount> accounts = customer.getCloudAccounts();
-        model.addAttribute("accounts", accounts);
-        return "account-manager";
-    }
 
-    @GetMapping("/add")
-    public String showAddAccountPage() {
-        return "add-account";
-    }
-
-    @GetMapping("/add-gcp")
-    public String showAddGcpAccountPage(Model model) {
-        model.addAttribute("gcpAccountRequest", new GcpAccountRequestDto());
-        return "add-gcp-account";
-    }
-
-    @PostMapping("/add-gcp")
-    public String addGcpAccount(@ModelAttribute("gcpAccountRequest") GcpAccountRequestDto request,
-                                Principal principal, RedirectAttributes redirectAttributes) {
+    // 3. This method now returns a list of accounts as JSON
+    @GetMapping
+    public ResponseEntity<List<CloudAccount>> getAccounts(Authentication authentication) {
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         try {
-            Customer customer = customerService.findByUsername(principal.getName());
-            gcpDataService.createGcpAccount(request, customer);
-            redirectAttributes.addFlashAttribute("successMessage", "GCP account added successfully!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Failed to add GCP account: " + e.getMessage());
+            Customer customer = customerService.findByUsernameWithCloudAccounts(authentication.getName());
+            return ResponseEntity.ok(customer.getCloudAccounts());
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.ok(Collections.emptyList());
         }
-        return "redirect:/account/manager";
     }
 
+    // 4. This endpoint adds a GCP account and returns a status message as JSON
+    @PostMapping("/add-gcp")
+    public ResponseEntity<Map<String, String>> addGcpAccount(@RequestBody GcpAccountRequestDto request,
+                                                             Authentication authentication) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            Customer customer = customerService.findByUsername(authentication.getName());
+            gcpDataService.createGcpAccount(request, customer);
+            response.put("message", "GCP account added successfully!");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", "Failed to add GCP account: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // 5. This endpoint remains the same as it was already returning JSON
     @PostMapping("/generate-stack-url")
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> generateStackUrl(@RequestBody AccountCreationRequestDto request, Principal principal) {
-        Customer customer = customerService.findByUsername(principal.getName());
+    public ResponseEntity<Map<String, String>> generateStackUrl(@RequestBody AccountCreationRequestDto request, Authentication authentication) {
+        Customer customer = customerService.findByUsername(authentication.getName());
         String url = awsAccountService.generateCloudFormationUrl(request.getAccountName(), customer);
 
         Map<String, String> response = new HashMap<>();
@@ -83,25 +82,34 @@ public class AccountManagerController {
         return ResponseEntity.ok(response);
     }
 
+    // 6. This endpoint verifies an account and returns a status
     @PostMapping("/verify")
-    public String verifyAccount(VerifyAccountRequest request, RedirectAttributes redirectAttributes) {
+    public ResponseEntity<Map<String, String>> verifyAccount(@RequestBody VerifyAccountRequest request) {
+        Map<String, String> response = new HashMap<>();
         try {
             awsAccountService.verifyAccount(request);
-            redirectAttributes.addFlashAttribute("successMessage", "Account verified successfully!");
+            response.put("message", "Account verified successfully!");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Failed to verify account: " + e.getMessage());
+            response.put("error", "Failed to verify account: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return "redirect:/account/manager";
     }
 
-    @PostMapping("/delete/{id}")
-    public String deleteAccount(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+    // 7. Changed to @DeleteMapping for proper REST semantics
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> deleteAccount(@PathVariable("id") Long id) {
+        Map<String, String> response = new HashMap<>();
         try {
             cloudAccountRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Account removed successfully!");
+            response.put("message", "Account removed successfully!");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Failed to remove account: " + e.getMessage());
+            response.put("error", "Failed to remove account: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return "redirect:/account/manager";
     }
+
+    // 8. REMOVED: All methods that returned String view names (like showAccountManager, showAddAccountPage)
+    // have been removed. Your frontend-app now handles all page routing.
 }

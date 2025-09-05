@@ -8,16 +8,23 @@ import com.xammer.billops.service.CustomerService;
 import com.xammer.billops.service.DashboardService;
 import com.xammer.billops.service.ResourceService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Controller
+// 1. Changed from @Controller to @RestController
+@RestController
+// 2. Added a base path for all billing-related APIs
+@RequestMapping("/api/billing")
 public class BillingController {
 
     private final CustomerService customerService;
@@ -32,21 +39,30 @@ public class BillingController {
         this.resourceService = resourceService;
     }
 
-    @GetMapping("/billing")
-    public String showBillingPage(Model model, Principal principal) {
-        Customer customer = customerService.findByUsernameWithCloudAccounts(principal.getName());
-        List<CloudAccount> accounts = customer.getCloudAccounts();
-        model.addAttribute("accounts", accounts);
-        return "billing";
+    // 3. NEW: Endpoint to get a list of a customer's cloud accounts for the dropdown
+    @GetMapping("/accounts")
+    public ResponseEntity<List<CloudAccount>> getCloudAccounts(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
+        try {
+            Customer customer = customerService.findByUsernameWithCloudAccounts(authentication.getName());
+            return ResponseEntity.ok(customer.getCloudAccounts());
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
     }
 
-    @GetMapping("/api/billing/data/{accountId}")
-    @ResponseBody
+    // 4. Endpoint path updated to be relative to the new base path
+    @GetMapping("/data/{accountId}")
     public ResponseEntity<DashboardDataDto> getBillingData(@PathVariable Long accountId,
                                                            @RequestParam(required = false) Integer year,
                                                            @RequestParam(required = false) Integer month,
-                                                           Principal principal) {
-        Customer customer = customerService.findByUsernameWithCloudAccounts(principal.getName());
+                                                           Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
+        Customer customer = customerService.findByUsernameWithCloudAccounts(authentication.getName());
         Optional<CloudAccount> accountOpt = customer.getCloudAccounts().stream()
                 .filter(acc -> acc.getId().equals(accountId)).findFirst();
 
@@ -58,15 +74,17 @@ public class BillingController {
         return ResponseEntity.ok(data);
     }
 
-    // --- ENDPOINT for region drill-down ---
-    @GetMapping("/api/billing/breakdown/regions")
-    @ResponseBody
+    // 5. Endpoint path updated
+    @GetMapping("/breakdown/regions")
     public ResponseEntity<List<Map<String, Object>>> getRegionBreakdown(@RequestParam Long accountId,
-                                                                         @RequestParam String serviceName,
-                                                                         @RequestParam(required = false) Integer year,
-                                                                         @RequestParam(required = false) Integer month,
-                                                                         Principal principal) {
-        Customer customer = customerService.findByUsernameWithCloudAccounts(principal.getName());
+                                                                        @RequestParam String serviceName,
+                                                                        @RequestParam(required = false) Integer year,
+                                                                        @RequestParam(required = false) Integer month,
+                                                                        Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
+        Customer customer = customerService.findByUsernameWithCloudAccounts(authentication.getName());
         CloudAccount account = customer.getCloudAccounts().stream()
                 .filter(acc -> acc.getId().equals(accountId)).findFirst()
                 .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -75,20 +93,24 @@ public class BillingController {
         return ResponseEntity.ok(data);
     }
 
-    // --- ENDPOINT UPDATED for instance drill-down to be service-aware ---
-    @GetMapping("/api/billing/breakdown/instances")
-    @ResponseBody
+    // 6. Endpoint path updated
+    @GetMapping("/breakdown/instances")
     public ResponseEntity<List<Map<String, Object>>> getInstanceBreakdown(@RequestParam Long accountId,
                                                                           @RequestParam String region,
-                                                                          @RequestParam String serviceName, // Added serviceName
-                                                                          Principal principal) {
-        Customer customer = customerService.findByUsernameWithCloudAccounts(principal.getName());
+                                                                          @RequestParam String serviceName,
+                                                                          Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
+        Customer customer = customerService.findByUsernameWithCloudAccounts(authentication.getName());
         CloudAccount account = customer.getCloudAccounts().stream()
                 .filter(acc -> acc.getId().equals(accountId)).findFirst()
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        // Pass serviceName to the resource service
         List<Map<String, Object>> data = resourceService.getResourcesInRegion(account, region, serviceName);
         return ResponseEntity.ok(data);
     }
+
+    // 7. REMOVED: The old @GetMapping("/billing") that returned a String "billing" is no longer needed.
+    // The frontend-app now handles the page itself.
 }

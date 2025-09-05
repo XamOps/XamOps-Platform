@@ -2,11 +2,10 @@ package com.xammer.billops;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient; // 1. IMPORT THIS
 
 @SpringBootApplication
-// Add this annotation to explicitly scan all your project's packages
-@ComponentScan(basePackages = "com.xammer.billops.*")
+@EnableDiscoveryClient // 2. ADD THIS ANNOTATION
 public class BillopsApplication {
 
     public static void main(String[] args) {
