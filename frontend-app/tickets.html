@@ -2,56 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>XamOps - Billing Dashboard</title>
+    <title>XamOps - Support Tickets</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
     <style>
         [x-cloak] { display: none !important; }
 
-        /* Reset and Base Styles */
+        /* Same styles as billing.html and invoice.html */
         * { box-sizing: border-box; }
         body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f8fafc; }
 
-        /* Layout */
         .app-layout { display: flex; height: 100vh; }
         .sidebar-container { width: 280px; flex-shrink: 0; }
         .main-content { flex-grow: 1; overflow-y: auto; padding: 2rem; }
 
-        /* Cards and Content */
         .card { background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); margin-bottom: 1.5rem; }
         .header-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: #1e293b; }
         .header-subtitle { color: #64748b; margin-bottom: 2rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 1.5rem; border-radius: 0.75rem; }
-        .stat-value { font-size: 2rem; font-weight: 700; }
-        .stat-label { opacity: 0.9; font-size: 0.875rem; margin-top: 0.5rem; }
         .coming-soon { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center; font-weight: 600; }
+        .action-button { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-decoration: none; font-weight: 600; display: inline-block; }
+        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .status-card { background: white; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; text-align: center; }
 
-        /* Sidebar Styles */
+        /* Copy all sidebar styles from billing.html */
         .sidebar { height: 100%; display: flex; flex-direction: column; background: white; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); z-index: 30; }
         .sidebar-header { display: flex; align-items: center; justify-content: center; height: 4rem; border-bottom: 1px solid #e5e7eb; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .sidebar-header a { text-decoration: none; font-size: 1.5rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 0.5rem; }
         .logo-icon { width: 2rem; height: 2rem; background: rgba(255, 255, 255, 0.2); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; }
         .beta-badge { font-size: 0.625rem; color: #ff9800; margin-left: 0.25rem; }
-
-        /* Account Selection */
         .account-section { padding: 1rem; border-bottom: 1px solid #e5e7eb; background: linear-gradient(135deg, #f9fafb 0%, white 100%); flex-shrink: 0; }
         .account-selector { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-radius: 0.75rem; background: white; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
-        .account-selector:hover { border-color: #667eea; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .account-info { display: flex; align-items: center; min-width: 0; flex: 1; }
         .account-avatar { width: 2.5rem; height: 2.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.875rem; margin-right: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .account-details { flex: 1; min-width: 0; }
         .account-name { font-size: 0.875rem; font-weight: 600; color: #1f2937; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .account-id { font-size: 0.75rem; color: #6b7280; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        /* Navigation */
         .nav-section { flex: 1; padding: 1rem 0.75rem; overflow-y: auto; }
-        .nav-section::-webkit-scrollbar { width: 6px; }
-        .nav-section::-webkit-scrollbar-track { background: transparent; }
-        .nav-section::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-        .nav-section::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-
         .nav-group { margin-bottom: 0.5rem; }
         .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem; text-decoration: none; color: #4b5563; transition: all 0.2s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
         .nav-item:hover { transform: translateX(4px); }
@@ -62,20 +49,14 @@
         .nav-item.cloudguard:hover { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); color: #dc2626; }
         .nav-item.billops:hover { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: #2563eb; }
         .nav-item.account:hover { background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); color: #7c3aed; }
-
         .nav-icon { width: 1.25rem; text-align: center; flex-shrink: 0; transition: transform 0.3s; }
-        .nav-item:hover .nav-icon { transform: scale(1.1); }
-
         .submenu { margin-left: 1.5rem; margin-top: 0.5rem; }
         .submenu .nav-item { font-size: 0.8125rem; font-weight: 500; padding: 0.5rem 1rem; }
         .submenu .nav-item.active { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-left: 4px solid #1d4ed8; }
         .submenu .nav-item:hover { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #2563eb; }
-
         .dropdown-button { display: flex; align-items: center; justify-content: space-between; width: 100%; }
         .dropdown-icon { font-size: 0.75rem; transition: transform 0.2s; }
         .dropdown-icon.open { transform: rotate(180deg); }
-
-        /* Footer */
         .sidebar-footer { padding: 1rem; border-top: 1px solid #e5e7eb; background: linear-gradient(135deg, #f9fafb 0%, white 100%); }
         .logout-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem; text-decoration: none; color: #4b5563; transition: all 0.2s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
         .logout-btn:hover { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); color: #dc2626; }
@@ -91,6 +72,12 @@
         .text-lg { font-size: 1.125rem; }
         .font-semibold { font-weight: 600; }
         .text-blue-600 { color: #2563eb; }
+        .text-2xl { font-size: 1.5rem; }
+        .font-bold { font-weight: 700; }
+        .text-green-600 { color: #059669; }
+        .text-gray-600 { color: #4b5563; }
+        .text-gray-500 { color: #6b7280; }
+        .text-sm { font-size: 0.875rem; }
     </style>
 </head>
 <body>
@@ -139,7 +126,7 @@
                     </a>
                 </div>
 
-                <!-- Cloudview -->
+                <!-- Other nav sections collapsed -->
                 <div class="nav-group">
                     <button @click="cloudviewOpen = !cloudviewOpen" class="nav-item cloudview">
                         <div class="dropdown-button">
@@ -157,7 +144,6 @@
                     </div>
                 </div>
 
-                <!-- Optimization -->
                 <div class="nav-group">
                     <button @click="optimizationOpen = !optimizationOpen" class="nav-item optimization">
                         <div class="dropdown-button">
@@ -177,7 +163,6 @@
                     </div>
                 </div>
 
-                <!-- Cloudguard -->
                 <div class="nav-group">
                     <button @click="cloudguardOpen = !cloudguardOpen" class="nav-item cloudguard">
                         <div class="dropdown-button">
@@ -195,7 +180,7 @@
                     </div>
                 </div>
 
-                <!-- BillOps - Active -->
+                <!-- BillOps - Active with Tickets highlighted -->
                 <div class="nav-group">
                     <button @click="billopsOpen = !billopsOpen" class="nav-item billops active">
                         <div class="dropdown-button">
@@ -207,9 +192,9 @@
                         </div>
                     </button>
                     <div x-show="billopsOpen" x-cloak class="submenu" x-transition>
-                        <a href="/billing" class="nav-item active">Billing</a>
+                        <a href="/billing" class="nav-item">Billing</a>
                         <a href="/invoice" class="nav-item">Invoice</a>
-                        <a href="/tickets" class="nav-item">Tickets</a>
+                        <a href="/tickets" class="nav-item active">Tickets</a>
                         <a href="/credits" class="nav-item">Credits</a>
                     </div>
                 </div>
@@ -237,50 +222,52 @@
     <main class="main-content">
         <div class="mb-6">
             <h1 class="header-title">
-                <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
-                Billing Dashboard
+                <i class="fas fa-headset text-blue-600 mr-3"></i>
+                Support Tickets
             </h1>
-            <p class="header-subtitle">Monitor your cloud spending and billing metrics</p>
+            <p class="header-subtitle">Get help with billing and account issues</p>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value">$0.00</div>
-                <div class="stat-label">Current Month Spend</div>
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="text-2xl font-bold text-green-600">0</div>
+                <div class="text-sm text-gray-500">Open Tickets</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value">$0.00</div>
-                <div class="stat-label">Last Month Spend</div>
+            <div class="status-card">
+                <div class="text-2xl font-bold text-blue-600">0</div>
+                <div class="text-sm text-gray-500">In Progress</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value">$0.00</div>
-                <div class="stat-label">Projected Month</div>
+            <div class="status-card">
+                <div class="text-2xl font-bold text-gray-600">0</div>
+                <div class="text-sm text-gray-500">Resolved</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value">0</div>
-                <div class="stat-label">Active Resources</div>
+        </div>
+
+        <div class="card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">
+                    <i class="fas fa-ticket-alt text-blue-600 mr-2"></i>
+                    Your Tickets
+                </h3>
+                <a href="#" class="action-button">
+                    <i class="fas fa-plus mr-2"></i>
+                    Create New Ticket
+                </a>
+            </div>
+            <div class="coming-soon">
+                <i class="fas fa-tools mr-2"></i>
+                Support ticket system with real-time chat and status tracking coming soon!
             </div>
         </div>
 
         <div class="card">
             <h3 class="text-lg font-semibold mb-4">
-                <i class="fas fa-chart-line text-blue-600 mr-2"></i>
-                Spending Overview
+                <i class="fas fa-question-circle text-blue-600 mr-2"></i>
+                Quick Help
             </h3>
             <div class="coming-soon">
-                <i class="fas fa-construction mr-2"></i>
-                Advanced billing analytics and cost breakdowns coming soon!
-            </div>
-        </div>
-
-        <div class="card">
-            <h3 class="text-lg font-semibold mb-4">
-                <i class="fas fa-history text-blue-600 mr-2"></i>
-                Recent Activity
-            </h3>
-            <div class="coming-soon">
-                <i class="fas fa-clock mr-2"></i>
-                Billing activity timeline will be available here
+                <i class="fas fa-book mr-2"></i>
+                FAQ and self-service resources will be available here
             </div>
         </div>
     </main>

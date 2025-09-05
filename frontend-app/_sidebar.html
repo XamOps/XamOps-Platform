@@ -176,6 +176,7 @@
         </a>
     </div>
 
+    <!-- Account Selection Section - Same as before -->
     <div x-data="{
         open: false,
         accounts: [],
@@ -190,7 +191,7 @@
         },
         fetchAccounts() {
             this.isLoading = true;
-fetch('/api/xamops/account-manager/accounts')
+            fetch('/api/xamops/account-manager/accounts')
                 .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch'))
                 .then(data => {
                     this.accounts = data.filter(acc => acc.status === 'CONNECTED');
@@ -205,7 +206,6 @@ fetch('/api/xamops/account-manager/accounts')
             sessionStorage.setItem('selectedAccountIds', JSON.stringify(this.selectedAccountIds));
             this.open = false;
             if (this.selectedAccountIds.length > 0) {
-                // ### CHANGE 1: Point to dashboard.html ###
                 const targetUrl = `/dashboard.html?accountIds=${this.selectedAccountIds.join(',')}`;
                 window.location.href = targetUrl;
             } else {
@@ -232,19 +232,19 @@ fetch('/api/xamops/account-manager/accounts')
 
             if (isGcp) {
                 if (index > -1) {
-                    this.selectedAccountIds = []; // Deselect if already selected
+                    this.selectedAccountIds = [];
                 } else {
-                    this.selectedAccountIds = [accountId]; // Select only this GCP account
+                    this.selectedAccountIds = [accountId];
                 }
-            } else { // AWS Account
+            } else {
                 const gcpSelected = this.selectedAccountIds.some(id => this.accounts.find(a => a.id === id)?.provider === 'GCP');
                 if (gcpSelected) {
-                    this.selectedAccountIds = [accountId]; // If a GCP account was selected, switch to this AWS account
+                    this.selectedAccountIds = [accountId];
                 } else {
                     if (index > -1) {
-                        this.selectedAccountIds.splice(index, 1); // Deselect
+                        this.selectedAccountIds.splice(index, 1);
                     } else {
-                        this.selectedAccountIds.push(accountId); // Select
+                        this.selectedAccountIds.push(accountId);
                     }
                 }
             }
@@ -254,9 +254,9 @@ fetch('/api/xamops/account-manager/accounts')
             const isGcpSelected = this.selectedAccountIds.some(id => this.accounts.find(a => a.id === id)?.provider === 'GCP');
 
             if (isGcpSelected) {
-                return true; // Disable all if a GCP account is selected
-            } else { // Multiple AWS accounts are selected
-                return accountProvider === 'GCP'; // Disable only GCP accounts
+                return true;
+            } else {
+                return accountProvider === 'GCP';
             }
         },
         get filteredAccounts() {
@@ -314,13 +314,14 @@ fetch('/api/xamops/account-manager/accounts')
         </div>
     </div>
 
+    <!-- Updated Navigation with BillOps moved to bottom -->
     <nav x-data="{
             selectedIds: JSON.parse(sessionStorage.getItem('selectedAccountIds') || '[]'),
             isActive(path) {
                 const currentPath = window.location.pathname;
                 if (path === '/dashboard.html') return currentPath === '/' || currentPath === '/dashboard.html' || currentPath.startsWith('/gcp_');
-                // ### ADDED LOGIC FOR BILLOPS ###
-                if (path === '/billops.html') return currentPath.startsWith('/billops.html');
+                if (path === '/billops.html' || path === '/billing' || path === '/invoice' || path === '/tickets' || path === '/credits')
+                    return currentPath.startsWith('/billops') || currentPath.startsWith('/billing') || currentPath.startsWith('/invoice') || currentPath.startsWith('/tickets') || currentPath.startsWith('/credits');
                 return currentPath.startsWith(path);
             },
             getLink(path) {
@@ -335,6 +336,7 @@ fetch('/api/xamops/account-manager/accounts')
             }
         }" class="flex-1 px-3 py-4 space-y-2 text-sm overflow-y-auto sidebar-scroll">
 
+        <!-- Dashboard -->
         <div class="sidebar-section" :class="{'active': isActive('/dashboard.html')}">
             <a :href="getLink('/dashboard.html')"
                class="nav-item menu-item flex items-center gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-200"
@@ -344,7 +346,7 @@ fetch('/api/xamops/account-manager/accounts')
             </a>
         </div>
 
-
+        <!-- Cloudview -->
         <div class="sidebar-section" :class="{'active': isActive('/cloudk8s') || isActive('/cloudlist') || isActive('/cloudmap')}">
             <div x-data="{ open: isActive('/cloudk8s') || isActive('/cloudlist') || isActive('/cloudmap') }">
                 <button @click="open = !open"
@@ -364,22 +366,7 @@ fetch('/api/xamops/account-manager/accounts')
             </div>
         </div>
 
-        <div class="sidebar-section" :class="{'active': isActive('/billops.html')}">
-            <div x-data="{ open: isActive('/billops.html') }">
-                <button @click="open = !open"
-                        class="nav-item menu-item w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-200"
-                        :class="isActive('/billops.html') ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-file-invoice-dollar menu-icon fa-fw w-5 text-center"></i>
-                        <span>BillOps</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-xs submenu-indicator transition-transform duration-200" :class="open && 'rotate-180'"></i>
-                </button>
-                <div x-show="open" x-cloak class="ml-6 mt-2 space-y-1" x-transition>
-                    <a :href="getLink('/billops.html')" :class="{'text-blue-600 font-bold bg-blue-50 border-l-4 border-blue-500': isActive('/billops.html')}" class="nav-item block rounded-lg px-4 py-2 font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50">Billing Dashboard</a>
-                </div>
-            </div>
-        </div>
+        <!-- Optimization -->
         <div class="sidebar-section" :class="{'active': isActive('/finops') || isActive('/cost') || isActive('/waste') || isActive('/rightsizing') || isActive('/reservation')}">
             <div x-data="{ open: isActive('/finops') || isActive('/cost') || isActive('/waste') || isActive('/rightsizing') || isActive('/reservation') }">
                 <button @click="open = !open"
@@ -401,6 +388,7 @@ fetch('/api/xamops/account-manager/accounts')
             </div>
         </div>
 
+        <!-- Cloudguard -->
         <div class="sidebar-section" :class="{'active': isActive('/security') || isActive('/performance') || isActive('/cloudguard/alerts')}">
             <div x-data="{ open: isActive('/security') || isActive('/performance') || isActive('/cloudguard/alerts') }">
                 <button @click="open = !open"
@@ -420,6 +408,28 @@ fetch('/api/xamops/account-manager/accounts')
             </div>
         </div>
 
+        <!-- BillOps - Moved to bottom with new sub-tabs -->
+        <div class="sidebar-section" :class="{'active': isActive('/billops.html') || isActive('/billing') || isActive('/invoice') || isActive('/tickets') || isActive('/credits')}">
+            <div x-data="{ open: isActive('/billops.html') || isActive('/billing') || isActive('/invoice') || isActive('/tickets') || isActive('/credits') }">
+                <button @click="open = !open"
+                        class="nav-item menu-item w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-200"
+                        :class="isActive('/billops.html') || isActive('/billing') || isActive('/invoice') || isActive('/tickets') || isActive('/credits') ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file-invoice-dollar menu-icon fa-fw w-5 text-center"></i>
+                        <span>BillOps</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs submenu-indicator transition-transform duration-200" :class="open && 'rotate-180'"></i>
+                </button>
+                <div x-show="open" x-cloak class="ml-6 mt-2 space-y-1" x-transition>
+                    <a :href="getLink('/billing')" :class="{'text-blue-600 font-bold bg-blue-50 border-l-4 border-blue-500': isActive('/billing')}" class="nav-item block rounded-lg px-4 py-2 font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50">Billing</a>
+                    <a :href="getLink('/invoice')" :class="{'text-blue-600 font-bold bg-blue-50 border-l-4 border-blue-500': isActive('/invoice')}" class="nav-item block rounded-lg px-4 py-2 font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50">Invoice</a>
+                    <a :href="getLink('/tickets')" :class="{'text-blue-600 font-bold bg-blue-50 border-l-4 border-blue-500': isActive('/tickets')}" class="nav-item block rounded-lg px-4 py-2 font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50">Tickets</a>
+                    <a :href="getLink('/credits')" :class="{'text-blue-600 font-bold bg-blue-50 border-l-4 border-blue-500': isActive('/credits')}" class="nav-item block rounded-lg px-4 py-2 font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50">Credits</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Manager -->
         <div class="sidebar-section" :class="{'active': isActive('/account-manager')}">
             <a href="/account-manager"
                class="nav-item menu-item flex items-center gap-3 rounded-xl px-4 py-3 font-semibold transition-all duration-200"
@@ -430,6 +440,7 @@ fetch('/api/xamops/account-manager/accounts')
         </div>
     </nav>
 
+    <!-- Logout Section -->
     <div class="p-4 border-t bg-gradient-to-r from-gray-50 to-white">
         <button @click="logout()"
                 class="nav-item menu-item flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 w-full text-left transition-all duration-200">
